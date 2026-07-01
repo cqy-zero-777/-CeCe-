@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI TestCase Generator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Menlo, monospace;
+            background: #0a0e1a;
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        .bg-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 200, 150, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 200, 150, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none; z-index: 0;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 30px 20px; position: relative; z-index: 1; }
+        .header {
+            text-align: center; margin-bottom: 32px;
+            border-bottom: 1px solid #1a2a3a; padding-bottom: 24px;
+        }
+        .header h1 {
+            font-size: 22px; font-weight: 600; color: #e0e0e0;
+            letter-spacing: 2px;
+        }
+        .header h1 span { color: #00c896; }
+        .header .sub {
+            font-size: 12px; color: #5a7a8a; margin-top: 6px;
+            letter-spacing: 1px;
+        }
+        .card {
+            background: #0f1a2a; border: 1px solid #1a2a3a; border-radius: 8px;
+            padding: 24px; margin-bottom: 20px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+        }
+        .nav-tabs {
+            display: flex; flex-wrap: wrap; gap: 2px;
+            border-bottom: 1px solid #1a2a3a; margin-bottom: 24px;
+            padding-bottom: 0;
+        }
+        .nav-tab {
+            padding: 10px 16px; font-size: 12px; color: #5a7a8a;
+            cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent;
+            letter-spacing: 0.5px; user-select: none;
+        }
+        .nav-tab:hover { color: #b0c0d0; background: rgba(0,200,150,0.04); }
+        .nav-tab.active { color: #00c896; border-bottom-color: #00c896; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-content h2 {
+            font-size: 14px; color: #00c896; margin-bottom: 20px;
+            font-weight: 500; letter-spacing: 1px;
+        }
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block; font-size: 11px; color: #5a7a8a; margin-bottom: 6px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .form-group input[type="file"] {
+            width: 100%; padding: 12px; background: #0a1525;
+            border: 1px solid #1a2a3a; border-radius: 4px; color: #b0c0d0;
+            font-size: 12px; cursor: pointer; font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .form-group input[type="file"]:hover { border-color: #00c896; }
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group input[type="url"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%; padding: 10px 12px; background: #0a1525;
+            border: 1px solid #1a2a3a; border-radius: 4px; color: #e0e0e0;
+            font-size: 13px; transition: border-color 0.2s; font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none; border-color: #00c896; box-shadow: 0 0 0 1px rgba(0,200,150,0.15);
+        }
+        .form-group textarea { resize: vertical; }
+        .form-group select { cursor: pointer; }
+        .radio-group { display: flex; gap: 20px; flex-wrap: wrap; }
+        .radio-group label {
+            display: flex; align-items: center; gap: 6px; font-size: 12px;
+            color: #8a9aaa; text-transform: none; cursor: pointer; letter-spacing: 0;
+        }
+        .radio-group input[type="radio"] { accent-color: #00c896; }
+        .checkbox-group { display: flex; gap: 20px; flex-wrap: wrap; }
+        .checkbox-group label {
+            display: flex; align-items: center; gap: 6px; font-size: 12px;
+            color: #8a9aaa; text-transform: none; cursor: pointer; letter-spacing: 0;
+        }
+        .checkbox-group input[type="checkbox"] { accent-color: #00c896; }
+        .page-range { display: flex; gap: 10px; align-items: center; }
+        .page-range input { width: 80px; text-align: center; }
+        .page-range span { color: #5a7a8a; font-size: 14px; }
+        .btn {
+            width: 100%; padding: 12px 24px; background: #00c896;
+            border: none; border-radius: 4px; color: #0a0e1a; font-size: 13px;
+            font-weight: 600; cursor: pointer; font-family: inherit;
+            letter-spacing: 1px; transition: all 0.2s;
+        }
+        .btn:hover { background: #00e8a8; box-shadow: 0 0 20px rgba(0,200,150,0.2); }
+        .btn:active { transform: scale(0.98); }
+        .btn-secondary { background: transparent; border: 1px solid #00c896; color: #00c896; }
+        .btn-secondary:hover { background: rgba(0,200,150,0.1); }
+        .tips {
+            font-size: 11px; color: #4a6a7a; margin-top: 14px;
+            padding: 10px 12px; background: #0a1525; border-radius: 4px;
+            border: 1px solid #152535; line-height: 1.6;
+        }
+        .read-range-options { display: none; padding: 12px; background: #0a1525; border-radius: 4px; margin-bottom: 18px; }
+        .read-range-options.show { display: block; }
+
+        /* 进度条样式 */
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+            padding: 16px;
+            background: #0a1525;
+            border: 1px solid #1a2a3a;
+            border-radius: 4px;
+        }
+        .progress-container.show { display: block; }
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #5a7a8a;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        .progress-bar {
+            height: 4px;
+            background: #1a2a3a;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #00c896;
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 2px;
+        }
+        .progress-fill.indeterminate {
+            width: 40%;
+            animation: progress-indeterminate 1.5s infinite ease-in-out;
+        }
+        @keyframes progress-indeterminate {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(350%); }
+        }
+        .progress-steps {
+            display: flex;
+            gap: 0;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #152535;
+        }
+        .progress-step {
+            flex: 1;
+            font-size: 10px;
+            color: #3a4a5a;
+            text-align: center;
+            letter-spacing: 0.5px;
+            transition: color 0.3s;
+        }
+        .progress-step.active { color: #00c896; }
+        .progress-step.completed { color: #4a9a6a; }
+        .step-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #1a2a3a; margin-right: 4px; vertical-align: middle; transition: all 0.3s; }
+        .progress-step.active .step-dot { background: #00c896; box-shadow: 0 0 8px rgba(0,200,150,0.5); }
+        .progress-step.completed .step-dot { background: #4a9a6a; }
+        .progress-step.active .step-dot::after { content: "●"; display: block; color: #0a0e1a; font-size: 5px; text-align: center; line-height: 8px; }
+        .progress-step.completed .step-dot::after { content: "✓"; display: block; color: #0a0e1a; font-size: 6px; text-align: center; line-height: 8px; font-weight: bold; }
+
+        .loading {
+            display: none; text-align: center; padding: 16px; margin-top: 16px;
+            font-size: 12px; color: #00c896; letter-spacing: 1px;
+            border: 1px solid rgba(0,200,150,0.2); border-radius: 4px;
+        }
+        .loading.show { display: block; }
+        .loading::after {
+            content: ''; display: inline-block; width: 12px; height: 12px;
+            border: 2px solid rgba(0,200,150,0.2); border-top-color: #00c896;
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            margin-left: 8px; vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-box {
+            display: none; margin-top: 16px; padding: 14px;
+            background: rgba(255,60,60,0.08); border: 1px solid rgba(255,60,60,0.2);
+            border-radius: 4px; font-size: 12px;
+        }
+        .error-box.show { display: block; }
+        .error-box .error-title { color: #ff6b6b; font-weight: 600; margin-bottom: 4px; }
+        .error-box .error-detail { color: #cc5555; font-size: 11px; }
+        .success-box {
+            display: none; margin-top: 16px; padding: 14px;
+            background: rgba(0,200,150,0.08); border: 1px solid rgba(0,200,150,0.2);
+            border-radius: 4px; font-size: 12px;
+        }
+        .success-box.show { display: block; }
+        .success-box .success-title { color: #00c896; font-weight: 600; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a1525; }
+        ::-webkit-scrollbar-thumb { background: #1a2a3a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2a3a4a; }
+
+        /* 引导蒙层 */
+        .guide-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .guide-overlay.hidden { display: none; }
+        .guide-modal {
+            background: #0f1a2a; border: 1px solid #1a2a3a; border-radius: 12px;
+            padding: 36px; max-width: 640px; width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .guide-modal h2 {
+            font-size: 18px; color: #e0e0e0; margin-bottom: 6px;
+            letter-spacing: 1px; text-align: center;
+        }
+        .guide-modal .sub {
+            font-size: 12px; color: #5a7a8a; text-align: center;
+            margin-bottom: 28px; letter-spacing: 0.5px;
+        }
+        .guide-cards { display: flex; flex-direction: column; gap: 12px; }
+        .guide-card {
+            display: flex; align-items: center; gap: 16px;
+            padding: 16px 20px; background: #0a1525; border: 1px solid #1a2a3a;
+            border-radius: 8px; cursor: pointer; transition: all 0.2s;
+        }
+        .guide-card:hover { border-color: #00c896; background: rgba(0,200,150,0.05); }
+        .guide-card-icon {
+            width: 40px; height: 40px; border-radius: 8px;
+            background: rgba(0,200,150,0.1); display: flex;
+            align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+        }
+        .guide-card-info { flex: 1; }
+        .guide-card-title { font-size: 14px; color: #e0e0e0; font-weight: 600; }
+        .guide-card-desc { font-size: 11px; color: #5a7a8a; margin-top: 3px; }
+        .guide-card-arrow { color: #3a5a6a; font-size: 18px; }
+        .guide-skip {
+            text-align: center; margin-top: 20px; font-size: 12px;
+            color: #4a6a7a; cursor: pointer; transition: color 0.2s;
+        }
+        .guide-skip:hover { color: #8a9aaa; }
+    </style>
+</head>
+<body>
+    <div id="guideOverlay" class="guide-overlay">
+        <div class="guide-modal">
+            <h2>👋 欢迎使用 AI TestCase Generator</h2>
+            <div class="sub">请选择你要做的事情，我帮你快速定位到对应功能</div>
+            <div class="guide-cards">
+                <div class="guide-card" onclick="goToTab('interface-doc')">
+                    <div class="guide-card-icon">📄</div>
+                    <div class="guide-card-info">
+                        <div class="guide-card-title">我有接口文档</div>
+                        <div class="guide-card-desc">上传 .docx / .json / .yaml，生成接口测试用例</div>
+                    </div>
+                    <div class="guide-card-arrow">→</div>
+                </div>
+                <div class="guide-card" onclick="goToTab('requirement-doc')">
+                    <div class="guide-card-icon">📋</div>
+                    <div class="guide-card-info">
+                        <div class="guide-card-title">我有需求文档</div>
+                        <div class="guide-card-desc">上传 .docx，生成UI功能测试用例</div>
+                    </div>
+                    <div class="guide-card-arrow">→</div>
+                </div>
+                <div class="guide-card" onclick="goToTab('generate-script')">
+                    <div class="guide-card-icon">🧪</div>
+                    <div class="guide-card-info">
+                        <div class="guide-card-title">我想生成自动化脚本</div>
+                        <div class="guide-card-desc">基于接口文档生成 TestNG + RestAssured 脚本</div>
+                    </div>
+                    <div class="guide-card-arrow">→</div>
+                </div>
+                <div class="guide-card" onclick="goToTab('natural')">
+                    <div class="guide-card-icon">💬</div>
+                    <div class="guide-card-info">
+                        <div class="guide-card-title">我只想快速描述</div>
+                        <div class="guide-card-desc">自然语言输入，快速生成测试用例</div>
+                    </div>
+                    <div class="guide-card-arrow">→</div>
+                </div>
+            </div>
+            <div class="guide-skip" onclick="dismissGuide()">跳过引导，我自己看看 →</div>
+        </div>
+    </div>
+    <div class="bg-grid"></div>
+    <div class="container">
+        <div class="header">
+            <h1>&lt;AI <span>TestCase</span> Generator /&gt;</h1>
+            <div class="sub">~$ upload document &amp;&amp; generate test cases</div>
+        </div>
+
+        <div class="card">
+            <div class="nav-tabs">
+                <div class="nav-tab active" onclick="switchTab('interface-doc')">[1] 接口文档生成</div>
+                <div class="nav-tab" onclick="switchTab('requirement-doc')">[2] 需求文档生成</div>
+                <div class="nav-tab" onclick="switchTab('generate-script')">[3] 自动化脚本</div>
+                <div class="nav-tab" onclick="switchTab('file')">[4] 文件上传</div>
+                <div class="nav-tab" onclick="switchTab('url')">[5] URL方式</div>
+                <div class="nav-tab" onclick="switchTab('natural')">[6] 自然语言</div>
+                <div class="nav-tab" onclick="switchTab('batch')">[7] 批量扫描</div>
+            </div>
+
+            <!-- Tab1: 从接口文档生成用例 -->
+            <div id="interface-doc" class="tab-content active">
+                <h2># 从接口文档生成用例</h2>
+                <form id="interfaceDocForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>选择接口文档</label>
+                        <input type="file" name="file" accept=".docx,.pdf,.json,.yaml,.yml" required>
+                    </div>
+                    <div class="form-group">
+                        <label>读取范围</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="readRangeType" value="all" checked onchange="toggleReadRangeOptions('readRangeOptions', 'pageRangeFields', 'chapterRangeFields')">全部读取</label>
+                            <label><input type="radio" name="readRangeType" value="page" onchange="toggleReadRangeOptions('readRangeOptions', 'pageRangeFields', 'chapterRangeFields')">指定页数</label>
+                            <label><input type="radio" name="readRangeType" value="chapter" onchange="toggleReadRangeOptions('readRangeOptions', 'pageRangeFields', 'chapterRangeFields')">指定章节</label>
+                        </div>
+                    </div>
+                    <div id="readRangeOptions" class="read-range-options">
+                        <div class="form-group" id="pageRangeFields">
+                            <label>页码范围</label>
+                            <div class="page-range">
+                                <input type="number" name="startPage" placeholder="起始" value="1" min="1">
+                                <span>—</span>
+                                <input type="number" name="endPage" placeholder="结束" value="50" min="1">
+                            </div>
+                        </div>
+                        <div class="form-group" id="chapterRangeFields">
+                            <label>章节范围</label>
+                            <input type="text" name="chapterRange" placeholder="第1章-第3章">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>输出路径（可选）</label>
+                        <input type="text" name="outputPath" placeholder="D:\\testcases\\接口测试.xlsx">
+                    </div>
+                    <button type="submit" class="btn">生成测试用例</button>
+                </form>
+                <div class="tips">[.docx] [.json] [.yaml] — 大型文档默认读取前50页，自动跳过封面/目录</div>
+            </div>
+
+            <!-- Tab2: 从需求文档生成用例 -->
+            <div id="requirement-doc" class="tab-content">
+                <h2># 从需求文档生成用例</h2>
+                <form id="requirementDocForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>选择需求文档</label>
+                        <input type="file" name="file" accept=".docx,.pdf" required>
+                    </div>
+                    <div class="form-group">
+                        <label>读取范围</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="readRangeType" value="all" checked onchange="toggleReadRangeOptions('readRangeOptions2', 'pageRangeFields2', 'chapterRangeFields2')">全部读取</label>
+                            <label><input type="radio" name="readRangeType" value="page" onchange="toggleReadRangeOptions('readRangeOptions2', 'pageRangeFields2', 'chapterRangeFields2')">指定页数</label>
+                            <label><input type="radio" name="readRangeType" value="chapter" onchange="toggleReadRangeOptions('readRangeOptions2', 'pageRangeFields2', 'chapterRangeFields2')">指定章节</label>
+                        </div>
+                    </div>
+                    <div id="readRangeOptions2" class="read-range-options">
+                        <div class="form-group" id="pageRangeFields2">
+                            <label>页码范围</label>
+                            <div class="page-range">
+                                <input type="number" name="startPage" placeholder="起始" value="1" min="1">
+                                <span>—</span>
+                                <input type="number" name="endPage" placeholder="结束" value="50" min="1">
+                            </div>
+                        </div>
+                        <div class="form-group" id="chapterRangeFields2">
+                            <label>章节范围</label>
+                            <input type="text" name="chapterRange" placeholder="第1章-第3章">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>自定义测试要求（可选）</label>
+                        <textarea name="requirements" rows="3" placeholder="重点测试安全漏洞，增加SQL注入和XSS攻击测试场景"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>输出路径（可选）</label>
+                        <input type="text" name="outputPath" placeholder="D:\\testcases\\需求测试.xlsx">
+                    </div>
+                    <button type="submit" class="btn">生成测试用例</button>
+                </form>
+                <div class="tips">[.docx] — 覆盖正常流程、异常流程、边界值、权限场景，自动识别章节</div>
+            </div>
+
+            <!-- Tab3: 生成自动化脚本 -->
+            <div id="generate-script" class="tab-content">
+                <h2># 生成自动化测试脚本</h2>
+                <form id="scriptGenForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>选择接口文档</label>
+                        <input type="file" name="file" accept=".docx,.pdf,.json,.yaml,.yml" required>
+                    </div>
+                    <div class="form-group">
+                        <label>读取范围</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="readRangeType" value="all" checked onchange="toggleReadRangeOptions('readRangeOptions3', 'pageRangeFields3', 'chapterRangeFields3')">全部读取</label>
+                            <label><input type="radio" name="readRangeType" value="page" onchange="toggleReadRangeOptions('readRangeOptions3', 'pageRangeFields3', 'chapterRangeFields3')">指定页数</label>
+                            <label><input type="radio" name="readRangeType" value="chapter" onchange="toggleReadRangeOptions('readRangeOptions3', 'pageRangeFields3', 'chapterRangeFields3')">指定章节</label>
+                        </div>
+                    </div>
+                    <div id="readRangeOptions3" class="read-range-options">
+                        <div class="form-group" id="pageRangeFields3">
+                            <label>页码范围</label>
+                            <div class="page-range">
+                                <input type="number" name="startPage" placeholder="起始" value="1" min="1">
+                                <span>—</span>
+                                <input type="number" name="endPage" placeholder="结束" value="50" min="1">
+                            </div>
+                        </div>
+                        <div class="form-group" id="chapterRangeFields3">
+                            <label>章节范围</label>
+                            <input type="text" name="chapterRange" placeholder="第1章-第3章">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>API Base URL</label>
+                        <input type="text" name="baseUrl" placeholder="http://localhost:8080" value="http://localhost:8080">
+                    </div>
+                    <div class="form-group">
+                        <label>输出路径（可选）</label>
+                        <input type="text" name="outputPath" placeholder="D:\\scripts\\api-automation">
+                    </div>
+                    <button type="submit" class="btn btn-secondary">生成自动化脚本</button>
+                </form>
+                <div class="tips">[TestNG] + [RestAssured] + [Allure] — 自动打包为 ZIP 下载</div>
+            </div>
+
+            <!-- Tab4: 文件上传 -->
+            <div id="file" class="tab-content">
+                <h2># 快速文件上传</h2>
+                <form id="quickUploadForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>选择文档</label>
+                        <input type="file" name="file" accept=".docx,.pdf,.json,.yaml,.yml" required>
+                    </div>
+                    <div class="form-group">
+                        <label>文档类型</label>
+                        <select name="docType">
+                            <option value="interface">接口文档</option>
+                            <option value="requirement">需求文档</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>输出路径（可选）</label>
+                        <input type="text" name="outputPath" placeholder="D:\\testcases\\测试结果.xlsx">
+                    </div>
+                    <button type="submit" class="btn">快速生成</button>
+                </form>
+                <div class="tips">默认读取全部内容，大型文档请使用 [1] 或 [2] 指定范围</div>
+            </div>
+
+            <!-- Tab5: URL方式 -->
+            <div id="url" class="tab-content">
+                <h2># 通过URL生成测试用例</h2>
+                <form id="urlForm">
+                    <div class="form-group">
+                        <label>Swagger / OpenAPI 文档 URL</label>
+                        <input type="url" name="url" placeholder="http://localhost:8080/v2/api-docs 或 https://petstore.swagger.io/v2/swagger.json" required style="width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>输出路径（可选）</label>
+                        <input type="text" name="outputPath" placeholder="D:\\testcases\\swagger测试.xlsx">
+                    </div>
+                    <button type="submit" class="btn">从URL生成</button>
+                </form>
+                <div class="tips">支持 Swagger JSON / OpenAPI YAML 在线文档，需可公开访问</div>
+            </div>
+
+            <!-- Tab6: 自然语言 -->
+            <div id="natural" class="tab-content">
+                <h2># 自然语言输入</h2>
+                <form id="naturalForm">
+                    <div class="form-group">
+                        <label>文档类型</label>
+                        <select name="docType">
+                            <option value="interface">接口文档（输入接口描述）</option>
+                            <option value="requirement">需求文档（输入功能需求）</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>输入内容</label>
+                        <textarea name="interfaceDoc" rows="8" placeholder="POST /api/user/login&#10;接口名称：用户登录&#10;参数：username(必填)、password(必填)"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>自定义测试要求（可选）</label>
+                        <textarea name="requirements" rows="3" placeholder="重点测试安全漏洞，增加SQL注入和XSS攻击测试场景"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>输出路径（可选）</label>
+                        <input type="text" name="outputPath" placeholder="D:\\testcases\\自定义测试.xlsx">
+                    </div>
+                    <button type="submit" class="btn">生成测试用例</button>
+                </form>
+                <div class="tips">输入接口描述或功能需求，AI 自动生成用例，适合快速验证</div>
+            </div>
+
+            <!-- Tab7: 批量扫描 -->
+            <div id="batch" class="tab-content">
+                <h2># 批量扫描文件夹</h2>
+                <form id="batchForm">
+                    <div class="form-group">
+                        <label>文件夹路径</label>
+                        <input type="text" name="folderPath" placeholder="D:\\api-docs 或 C:\\project\\swagger" required style="width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>扫描文件类型</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="scanDocx" checked>.docx</label>
+                            <label><input type="checkbox" name="scanJson" checked>.json</label>
+                            <label><input type="checkbox" name="scanYaml" checked>.yaml/.yml</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>输出报告路径（可选）</label>
+                        <input type="text" name="outputPath" placeholder="D:\\reports\\批量测试报告.html">
+                    </div>
+                    <button type="submit" class="btn btn-secondary">批量扫描</button>
+                </form>
+                <div class="tips">扫描文件夹内所有文档，自动生成测试用例并输出 HTML 报告</div>
+            </div>
+
+            <!-- 进度条 -->
+            <div id="progressContainer" class="progress-container">
+                <div class="progress-info">
+                    <span id="progressStatus">正在处理...</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-steps">
+                    <div class="progress-step" data-step="1"><span class="step-dot"></span>上传文档</div>
+                    <div class="progress-step" data-step="2"><span class="step-dot"></span>解析内容</div>
+                    <div class="progress-step" data-step="3"><span class="step-dot"></span>AI生成用例</div>
+                    <div class="progress-step" data-step="4"><span class="step-dot"></span>导出文件</div>
+                </div>
+            </div>
+
+            <div id="loading" class="loading">正在处理，请稍候</div>
+            <div id="errorBox" class="error-box">
+                <div class="error-title" id="errorTitle"></div>
+                <div class="error-detail" id="errorDetail"></div>
+            </div>
+            <div id="successBox" class="success-box">
+                <div class="success-title" id="successTitle"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (!localStorage.getItem('guideDismissed')) {
+            document.getElementById('guideOverlay').classList.remove('hidden');
+        }
+        function goToTab(tabId) {
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.nav-tab[onclick*="${tabId}"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById('guideOverlay').classList.add('hidden');
+            localStorage.setItem('guideDismissed', 'true');
+        }
+        function dismissGuide() {
+            document.getElementById('guideOverlay').classList.add('hidden');
+            localStorage.setItem('guideDismissed', 'true');
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            hideProgress();
+            hideError();
+        }
+
+        function toggleReadRangeOptions(optionsId, pageFieldsId, chapterFieldsId) {
+            const options = document.getElementById(optionsId);
+            const pageFields = document.getElementById(pageFieldsId);
+            const chapterFields = document.getElementById(chapterFieldsId);
+            const type = event.target.value;
+            if (type === 'all') { options.classList.remove('show'); }
+            else { options.classList.add('show'); pageFields.style.display = type === 'page' ? 'block' : 'none'; chapterFields.style.display = type === 'chapter' ? 'block' : 'none'; }
+        }
+
+        function showError(title, detail) {
+            document.getElementById('errorTitle').textContent = title;
+            document.getElementById('errorDetail').textContent = detail || '';
+            document.getElementById('errorBox').classList.add('show');
+            hideProgress();
+        }
+
+        function hideError() { document.getElementById('errorBox').classList.remove('show'); }
+
+        function showSuccess(title) {
+            document.getElementById('successTitle').textContent = title;
+            document.getElementById('successBox').classList.add('show');
+            setTimeout(() => document.getElementById('successBox').classList.remove('show'), 3000);
+        }
+
+        let progressTimer = null;
+
+        function showProgress() {
+            document.getElementById('progressContainer').classList.add('show');
+            const fill = document.getElementById('progressFill');
+            fill.classList.remove('indeterminate');
+            fill.style.width = '0%';
+            document.getElementById('progressStatus').textContent = '正在处理...';
+            document.getElementById('progressPercent').textContent = '0%';
+            document.querySelectorAll('.progress-step').forEach(s => s.classList.remove('active', 'completed'));
+            if (progressTimer) clearInterval(progressTimer);
+        }
+
+        function hideProgress() {
+            document.getElementById('progressContainer').classList.remove('show');
+            const fill = document.getElementById('progressFill');
+            fill.classList.remove('indeterminate');
+            if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+        }
+
+        function updateProgress(percent, status, step) {
+            const fill = document.getElementById('progressFill');
+            fill.classList.remove('indeterminate');
+            if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+            fill.style.width = percent + '%';
+            document.getElementById('progressPercent').textContent = percent + '%';
+            if (status) document.getElementById('progressStatus').textContent = status;
+            if (step) {
+                document.querySelectorAll('.progress-step').forEach(s => {
+                    const n = parseInt(s.getAttribute('data-step'));
+                    if (n < step) { s.classList.add('completed'); }
+                    else if (n === step) { s.classList.add('active'); }
+                });
+            }
+        }
+
+        async function handleFormSubmit(formId, apiUrl, successMessage) {
+            const form = document.getElementById(formId);
+            if (!form) return;
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault(); hideError();
+                const btn = form.querySelector('button[type="submit"]');
+                const origText = btn.textContent; btn.disabled = true; btn.textContent = '处理中...';
+                showProgress();
+                const formData = new FormData(this);
+                try {
+                    updateProgress(10, '上传文档...', 1);
+                    const response = await fetch(apiUrl, { method: 'POST', body: formData });
+                    startSmoothProgress(75, 120000);
+                    if (response.headers.get('content-type')?.includes('application/json')) {
+                        const data = await response.json();
+                        if (data.message && !data.errorCode) { updateProgress(100, '完成', 4); showSuccess(data.message + (data.path ? '，已保存到：' + data.path : '')); }
+                        else if (data.errorCode || data.code >= 400) { showError(data.message || '生成失败', data.detail || ''); }
+                        return;
+                    }
+                    if (!response.ok) { showError('请求失败', 'HTTP状态码: ' + response.status); return; }
+                    updateProgress(80, '导出文件...', 4);
+                    const blob = await response.blob();
+                    const dlUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = dlUrl;
+                    a.download = response.headers.get('Content-Disposition')?.split('filename=')[1] || 'result.xlsx';
+                    document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(dlUrl);
+                    updateProgress(100, '完成', 4);
+                    if (successMessage) showSuccess(successMessage);
+                    setTimeout(hideProgress, 2000);
+                } catch (error) { showError('网络错误', error.message); }
+                finally { btn.disabled = false; btn.textContent = origText; if (document.getElementById('errorBox').classList.contains('show')) hideProgress(); }
+            });
+        }
+
+        handleFormSubmit('interfaceDocForm', '/api/generate', '测试用例已生成！');
+        handleFormSubmit('scriptGenForm', '/api/generate-script', '自动化测试脚本已生成！');
+        handleFormSubmit('quickUploadForm', '/api/generate-from-text', '测试用例已生成！');
+        handleFormSubmit('naturalForm', '/api/generate-from-text', '测试用例已生成！');
+        handleFormSubmit('urlForm', '/api/generate-from-url', 'Swagger测试用例已生成！');
+        handleFormSubmit('batchForm', '/api/batch-scan', '批量扫描报告已生成！');
+
+        document.getElementById('requirementDocForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); hideError();
+            const btn = this.querySelector('button[type="submit"]');
+            const origText = btn.textContent; btn.disabled = true; btn.textContent = '处理中...';
+            showProgress();
+            const formData = new FormData(this);
+            formData.append('docType', 'requirement');
+            try {
+                updateProgress(10, '上传需求文档...', 1);
+                const response = await fetch('/api/generate-from-text', { method: 'POST', body: formData });
+                updateProgress(50, '按章节生成用例...', 3);
+                if (response.headers.get('content-type')?.includes('application/json')) {
+                    const data = await response.json();
+                    if (data.message && !data.errorCode) { updateProgress(100, '完成', 4); showSuccess(data.message + (data.path ? '，已保存到：' + data.path : '')); }
+                    else if (data.errorCode || data.code >= 400) { showError(data.message || '生成失败', data.detail || ''); }
+                    return;
+                }
+                if (!response.ok) { showError('请求失败', 'HTTP状态码: ' + response.status); return; }
+                updateProgress(80, '导出Excel...', 4);
+                const blob = await response.blob();
+                const dlUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = dlUrl;
+                a.download = response.headers.get('Content-Disposition')?.split('filename=')[1] || '测试用例.xlsx';
+                document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(dlUrl);
+                updateProgress(100, '完成', 4); showSuccess('需求测试用例已生成！');
+                setTimeout(hideProgress, 2000);
+            } catch (error) { showError('网络错误', error.message); }
+            finally { btn.disabled = false; btn.textContent = origText; if (document.getElementById('errorBox').classList.contains('show')) hideProgress(); }
+        });
+    </script>
+</body>
+</html>

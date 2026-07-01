@@ -1,0 +1,149 @@
+spring:
+  application:
+    name: ai-testcase-generator
+  thymeleaf:
+    check-template-location: false
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  mvc:
+    async:
+      request-timeout: 600000
+
+server:
+  port: 8886
+  tomcat:
+    uri-encoding: UTF-8
+    use-ssl: false
+    connection-timeout: 600000
+
+ai:
+  # API Key 从环境变量读取，支持 DASHSCOPE_API_KEY / DEEPSEEK_API_KEY / AI_API_KEY
+  api-key: ${DEEPSEEK_API_KEY:}
+  model:
+    provider: deepseek
+    qwen:
+      model-name: qwen-turbo
+    deepseek:
+      model-name: deepseek-chat
+      base-url: https://api.deepseek.com
+
+  prompts:
+    extract-interfaces: |
+      你是一位资深测试架构师。请从以下需求文档中提取所有API接口定义。
+
+      要求：
+      1. 每个接口单独一行
+      2. 格式：方法 路径\n参数列表（如果有）
+      3. 参数格式：参数名:类型:约束:说明
+
+      示例输出：
+      POST /api/user/login
+      参数：
+        username: 字符串:必填,最大20字符:用户名
+        password: 字符串:必填,最大50字符:密码
+
+      GET /api/user/list
+      参数：
+        page: 整数:可选,默认1:页码
+        size: 整数:可选,默认10:每页大小
+
+      文档内容：
+      {DOC_CONTENT}
+
+    extract-interfaces-simple: |
+      请从以下需求文档中提取所有API接口定义。
+      输出格式（每行一个接口）：
+      方法 路径|参数名1:类型:说明|参数名2:类型:说明|...
+
+      如果没有找到接口，输出"未找到接口定义"。
+
+      文档内容：
+      {DOC_CONTENT}
+
+    generate-testcases: |
+      你是一位资深测试架构师。请为以下接口设计【后端接口自动化用例】。
+
+      ⚠️ 质量红线（违者回炉重造）：
+      1. 一个接口至少生成 8 条用例
+      2. 参数值必须真实可执行！禁止 xxx、test、abc、123456 等占位符
+         - 用户名：admin、zhangsan（禁止 test、user）
+         - 手机号：13800138000（禁止 12345678901）
+         - 邮箱：admin@example.com（禁止 test@test.com）
+         - 金额：用具体数字（如 99.00、1000.00）
+      3. 预期结果必须量化！禁止"操作成功"、"页面正常"等模糊描述
+         - ✅ 正确：返回 200 + {"code":0,"msg":"success"}，users表新增1条记录
+         - ❌ 错误：操作成功
+      4. 测试点分类仅限：功能验证/参数校验/边界值/异常场景/数据库校验
+      5. 断言必须包含：HTTP状态码 + 业务码(code/msg) + 关键返回字段
+      6. 禁止生成重复或等价类冗余用例
+      7. 输出格式必须严格按以下 24 列用 | 分隔，不要输出用例编号
+
+      必须覆盖的场景：
+      - 正向用例（1-2 条）：正常流程 + 核心业务验证
+      - 参数校验（2-3 条）：必填项、格式校验、长度边界
+      - 异常场景（2-3 条）：空值、非法值、越权访问、token过期、SQL注入
+      - 数据库校验（1-2 条）：数据插入/更新后验证数据库状态
+
+      输出格式（24列）：
+      测试模块|测试点|用例标题|前置条件|接口路径|请求方法|请求头|请求参数|预期状态码|预期业务码|预期响应JSON|断言规则|数据库校验|优先级|测试环境|版本|测试人|缺陷ID|测试日期|关联UI用例ID|实际结果|测试类型|测试模块代码
+
+      参数填写规范：
+      - 测试模块：从路径识别，如/admin/employee→EMPLOYEE
+      - 测试点：仅限「功能验证/参数校验/边界值/异常场景/数据库校验」
+      - 前置条件：包含具体账号、预置数据、环境信息
+      - 请求头：Content-Type: application/json; Authorization: Bearer {token}
+      - 请求参数：完整JSON格式，值必须真实可执行
+      - 预期状态码：HTTP状态码（200/400/401/403/500等）
+      - 预期业务码：业务响应码（0成功/非0错误）
+      - 预期响应JSON：完整JSON结构，包含关键字段和值
+      - 断言规则：response.code == 0 && response.data.id != null
+      - 数据库校验：数据插入/更新/删除后验证（如"users表新增1条记录"）
+      - 优先级：P0/P1/P2
+      - 测试模块代码：大写英文缩写，与测试模块对应
+
+      输出示例（注意参数值都是真实的）：
+      EMPLOYEE|功能验证|正确用户名密码登录成功|用户admin已注册，密码已设置|/admin/employee/login|POST|Content-Type: application/json|{"username":"admin","password":"123456"}|200|0|{"code":0,"message":"success","data":{"token":"eyJhbGciOiJIUzUxMiJ9.xxx"}}|response.code == 0 && response.data.token != null|无|P0|测试环境|V1.0.0||||||API|EMP
+      EMPLOYEE|参数校验|用户名为空返回参数错误|无|/admin/employee/login|POST|Content-Type: application/json|{"username":"","password":"123456"}|400|400|{"code":400,"message":"用户名不能为空"}|response.code == 400 && response.message.contains('不能为空')|无|P0|测试环境|V1.0.0||||||API|EMP
+      EMPLOYEE|边界值|用户名1字符登录成功|存在用户名为"a"的账号|/admin/employee/login|POST|Content-Type: application/json|{"username":"a","password":"123456"}|200|0|{"code":0,"message":"success"}|response.code == 0|无|P1|测试环境|V1.0.0||||||API|EMP
+      ORDER|异常场景|商品库存不足下单失败|用户user001已登录，商品ID1001库存为0|/api/order/create|POST|Content-Type: application/json; Authorization: Bearer user001_token|{"productId":1001,"quantity":1}|400|40001|{"code":40001,"message":"商品库存不足"}|response.code == 40001 && response.message.contains('库存不足')|products表id=1001的stock字段为0|P0|测试环境|V1.0.0||||||API|ORD
+
+    generate-testcases-from-requirement: |
+      你是一位资深测试架构师。请根据以下需求文档，生成【UI功能测试用例】。
+
+      ⚠️ 质量红线（违者回炉重造）：
+      1. 一个功能至少生成 6 条用例
+      2. 操作步骤必须包含具体页面路径（如【系统管理】→【用户管理】→【新增】）
+      3. 预期结果必须量化！禁止模糊描述
+         - ✅ 正确：页面弹出"添加成功"提示，列表新增1条记录，显示用户名"张三"
+         - ❌ 错误：操作成功、页面正常、数据正确
+      4. 测试点分类仅限：正向/参数校验/边界/异常/UI校验/权限校验
+      5. 预置测试数据必须包含具体账号（admin/123456）和数据
+      6. 输出格式必须严格按以下 14 列用 | 分隔，不要输出用例编号
+
+      必须覆盖的场景：
+      - 正向流程（1 条）：核心业务走通，完整操作路径
+      - 参数校验（1-2 条）：必填项、格式校验
+      - 边界场景（1 条）：最大值/最小值
+      - 异常场景（1-2 条）：数据不存在、重复提交、非法操作
+      - UI校验（1 条）：页面刷新持久化、布局适配、文案固定性
+
+      输出格式（14列）：
+      测试大模块|子模块|测试点分类|用例标题|前置条件|预置测试数据|操作步骤|量化预期结果|优先级|测试环境|版本|实际结果|缺陷单号|测试日期
+
+      字段规范：
+      - 测试大模块：顶层业务域（如"系统管理"、"业务功能"、"数据管理"）
+      - 子模块：具体功能模块（如"用户管理"、"订单管理"、"商品管理"）
+      - 测试点分类：仅限「正向/参数校验/边界/异常/UI校验/权限校验」
+      - 前置条件：包含系统状态、页面路径
+      - 预置测试数据：包含具体账号（admin/123456）、预置数据
+      - 操作步骤：包含完整页面路径，数字编号步骤
+      - 量化预期结果：包含明确判定标准（数字、具体值、状态）
+      - 优先级：仅限「P0/P1/P2」
+
+      输出示例：
+      系统管理|用户管理|正向|管理员登录成功|测试环境已启动，浏览器已打开|管理员账号admin/123456已注册|1.点击【系统管理】→【用户管理】 2.输入用户名admin 3.输入密码123456 4.点击登录按钮|成功跳转到系统首页，右上角显示"admin"，登录时间格式为"YYYY-MM-DD HH:mm"|P0|测试环境|V1.0.0||||
+      系统管理|用户管理|参数校验|用户名为空登录失败|测试环境已启动，登录页面已打开|无预置数据|1.用户名输入框留空 2.密码输入123456 3.点击登录按钮|页面提示"用户名不能为空"，登录按钮保持可点击状态|P0|测试环境|V1.0.0||||
+      系统管理|用户管理|边界|用户名20字符边界测试|测试环境已启动，登录页面已打开|存在用户名为20位字母的账号"aaaaaaaaaaaaaaaaaaaa"|1.输入20位用户名 2.密码输入正确密码 3.点击登录按钮|登录成功，首页正常展示|P1|测试环境|V1.0.0||||
+      业务功能|订单管理|异常|商品库存不足下单失败|测试环境已启动，用户已登录，商品详情页已打开|商品ID1001库存为0，用户user001已登录|1.点击【业务功能】→【商品列表】 2.点击商品ID1001进入详情 3.点击立即购买 4.数量输入1 5.点击提交订单|页面提示"库存不足"，订单未创建，订单列表无新增记录|P0|测试环境|V1.0.0||||
