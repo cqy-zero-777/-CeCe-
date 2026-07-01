@@ -1,0 +1,11 @@
+用例编号	测试模块	测试点	用例标题	测试接口	请求方法	前置条件	具体操作	请求参数	预期状态码	预期业务码	预期结果	优先级	实际结果
+TC001		测试模块	测试点	用例标题	测试接口	请求方法	前置条件	具体操作	null	null	预期业务码	null	null
+TC001		:---	:---	:---	:---	:---	:---	:---	null	null	:---	null	null
+TC001		EMPLOYEE	正常登录	验证成功为区域功能节点赋码	/admin/employee/identifier	POST	1. 管理员已登录并获取有效Token。2. 区域功能节点的注册信息已提交。	1. 调用赋码接口。2. 传入符合规范的区域功能节点编码参数。	null	200	1000	null	null
+TC001		EMPLOYEE	参数校验	验证类型码无效时赋码失败	/admin/employee/identifier	POST	1. 管理员已登录并获取有效Token。	1. 调用赋码接口。2. 传入无效的类型码（如`0`）。	null	400	2001	null	null
+TC001		EMPLOYEE	边界值	验证主体标识码长度边界	/admin/employee/identifier	POST	1. 管理员已登录并获取有效Token。	1. 调用赋码接口。2. 传入长度为17位（下限-1）和19位（上限+1）的统一社会信用代码。	null	400	2002	null	null
+TC001		EMPLOYEE	异常场景	验证未登录用户赋码被拒绝	/admin/employee/identifier	POST	无（请求头中不携带Token）。	1. 直接调用赋码接口。2. 传入任何有效的参数。	null	401		null	null
+TC001		EMPLOYEE	正常登录	验证成功解析一个已存在的标识码	/admin/employee/identifier/parse	GET	1. 系统中已存在一个标识码`291440300000000000004403A1B2C3D4X`。2. 用户已登录。	1. 调用标识解析接口。2. 传入该有效的标识码。	null	200	1000	null	null
+TC001		EMPLOYEE	边界值	验证查询不存在的标识码	/admin/employee/identifier/parse	GET	1. 用户已登录。	1. 调用标识解析接口。2. 传入一个格式正确但系统中不存在的标识码。	null	200	1004	null	null
+TC001		EMPLOYEE	异常场景	验证查询格式错误的标识码	/admin/employee/identifier/parse	GET	1. 用户已登录。	1. 调用标识解析接口。2. 传入一个长度不足32位的字符串。	null	400	2003	null	null
+TC001		EMPLOYEE	异常场景	验证并发赋码时的冲突检测	/admin/employee/identifier	POST	1. 管理员已登录。2. 多个请求同时为同一主体和相同区域赋码。	1. 使用自动化工具（如JMeter）同时发送2个相同的赋码请求。2. 检查数据库或返回结果。	null	null	1000/2004	null	null

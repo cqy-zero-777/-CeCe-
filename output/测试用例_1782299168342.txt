@@ -1,0 +1,19 @@
+用例编号	用例标题	接口路径	请求方法	请求参数	预期结果
+TC001	正常登录	/admin/employee/login	POST	{"username": "admin", "password": "123456"}	登录成功，返回token
+TC001	用户名边界值测试	/admin/employee/login	POST	{"username": "a", "password": "123456"}	登录成功，返回token
+TC001	密码边界值测试	/admin/employee/login	POST	{"username": "admin", "password": "1"}	参数错误，提示密码长度不足
+TC004	正常退出登录	/admin/employee/logout	POST	{"token": "valid_token"}	退出成功，返回200状态码
+TC005	边界值测试-页码为0	/admin/employee/page	GET	name=&page=0&pageSize=10	返回第一页数据（页码最小为1）
+TC005	边界值测试-页码为最大值	/admin/employee/page	GET	name=&page=999999&pageSize=10	返回对应页的数据或空数据（根据后端逻辑）
+TC005	异常参数-页码为字符串	/admin/employee/page	GET	name=&page=abc&pageSize=10	返回错误信息，提示页码格式不正确
+TC005	异常参数-每页大小为负数	/admin/employee/page	GET	name=&page=1&pageSize=-5	返回错误信息，提示每页大小不能为负数
+TC009	正常更新员工状态为启用	/admin/employee/status/1?id=1001	POST	status=1&id=1001	更新成功，返回200状态码
+TC009	正常更新员工状态为禁用	/admin/employee/status/0?id=1002	POST	status=0&id=1002	更新成功，返回200状态码
+TC011	页码为边界值1	/admin/category/page	GET	page=1&pageSize=10	返回第一页数据
+TC011	页码为边界值最大值	/admin/category/page	GET	page=1000&pageSize=10	返回第1000页数据（假设系统支持）
+TC011	pageSize为边界值最小值	/admin/category/page	GET	page=1&pageSize=1	返回每页1条数据
+TC011	pageSize为边界值最大值	/admin/category/page	GET	page=1&pageSize=1000	返回每页1000条数据
+TC015	边界值-最小有效ID	/admin/category?id=1	DELETE	{"id":1}	成功删除分类
+TC015	边界值-最大有效ID	/admin/category?id=2147483647	DELETE	{"id":2147483647}	成功删除分类
+TC015	异常场景-非法字符	/admin/category?id=1;DROP TABLE	DELETE	{"id":"1;DROP TABLE"}	参数校验失败
+TC018	所有参数正常但重复名称时新增失败	/admin/category	PUT	{"name":"热菜","type":1,"sort":1}	返回错误状态码400，提示名称已存在

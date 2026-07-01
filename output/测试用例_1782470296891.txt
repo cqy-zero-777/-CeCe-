@@ -1,0 +1,117 @@
+用例编号	用例标题	接口路径	请求方法	请求参数	预期结果
+TC001	用例编号	用例标题	接口路径	请求方法	预期业务码
+TC001	:---	:---	:---	:---	:---
+TC001	TC-LOGIN-001	登录成功-正确用户名和密码	/employee/login	POST	1
+TC001	TC-LOGIN-002	登录失败-错误密码	/employee/login	POST	0
+TC001	TC-LOGIN-003	登录失败-不存在的用户名	/employee/login	POST	0
+TC001	TC-LOGIN-004	登录失败-用户名为空	/employee/login	POST	
+TC001	TC-LOGIN-005	登录失败-密码为空	/employee/login	POST	
+TC001	TC-LOGIN-006	登录失败-用户名和密码均为空	/employee/login	POST	
+TC001	TC-LOGIN-007	登录失败-请求体格式错误（非JSON）	/employee/login	POST	
+TC001	TC-LOGIN-008	登录失败-请求体为空	/employee/login	POST	
+TC001	TC-LOGIN-009	登录失败-用户名长度超长（边界值）	/employee/login	POST	
+TC001	TC-LOGIN-010	登录失败-密码长度超长（边界值）	/employee/login	POST	
+TC013	用例编号	用例标题	接口路径	请求方法	预期业务码
+TC013	:---	:---	:---	:---	:---
+TC013	TC-LOGIN-001	正常登录（有效等价类）	/admin/employee/login	POST	
+TC013	TC-LOGIN-002	用户名不存在（无效等价类）	/admin/employee/login	POST	
+TC013	TC-LOGIN-003	密码错误（无效等价类）	/admin/employee/login	POST	
+TC013	TC-LOGIN-004	用户名为空（边界/异常）	/admin/employee/login	POST	
+TC013	TC-LOGIN-005	密码为空（边界/异常）	/admin/employee/login	POST	
+TC013	TC-LOGIN-006	请求体格式错误（异常场景）	/admin/employee/login	POST	
+TC013	TC-LOGIN-007	缺少必填字段（异常场景）	/admin/employee/login	POST	
+TC013	TC-LOGIN-008	用户名超长（边界值分析）	/admin/employee/login	POST	
+TC013	TC-LOGIN-009	密码超长（边界值分析）	/admin/employee/login	POST	
+TC013	TC-LOGIN-010	请求体为 JSON 数组（异常场景）	/admin/employee/login	POST	
+TC025	正常退出登录（有效Token）	/admin/employee/logout	POST	{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.valid-token"}	退出成功
+TC025	未提供Token（空请求体）	/admin/employee/logout	POST	{}	请求体缺少token字段
+TC025	Token字段为空字符串	/admin/employee/logout	POST	{"token":""}	token不能为空
+TC025	Token格式无效（非JWT）	/admin/employee/logout	POST	{"token":"invalid-token-format"}	无效的认证凭证
+TC025	Token已过期（过期时间戳）	/admin/employee/logout	POST	{"token":"eyJhbGciOiJIUzI1NiJ9.expired-token"}	Token已过期，请重新登录
+TC025	Token被篡改（签名无效）	/admin/employee/logout	POST	{"token":"eyJhbGciOiJIUzI1NiJ9.tampered-token"}	Token验证失败
+TC025	Token用户不存在（已被删除）	/admin/employee/logout	POST	{"token":"eyJhbGciOiJIUzI1NiJ9.deleted-user-token"}	用户不存在或已注销
+TC025	Token类型错误（使用用户Token）	/admin/employee/logout	POST	{"token":"eyJhbGciOiJIUzI1NiJ9.user-token"}	无权限执行此操作
+TC025	请求头中带Token但Body为空	/admin/employee/logout	POST	{"token":""}	请求体缺少token字段
+TC025	重复退出登录（已登出Token）	/admin/employee/logout	POST	{"token":"eyJhbGciOiJIUzI1NiJ9.already-logged-out"}	退出成功（幂等处理）
+TC035	用例编号	用例标题	接口路径	请求方法	预期业务码
+TC035	:---	:---	:---	:---	:---
+TC035	TC001	验证所有必填字段合法时，员工创建成功	/admin/employee	POST	1
+TC035	TC002	验证用户名字段为空，创建失败（等价类-无效）	/admin/employee	POST	0
+TC035	TC003	验证用户名字段长度超过最大限制（如20字符），创建失败（边界值）	/admin/employee	POST	0
+TC035	TC004	验证姓名字段包含特殊字符（如@），创建失败（异常场景）	/admin/employee	POST	0
+TC035	TC005	验证手机号字段格式不正确（如11个1），创建失败（等价类-无效）	/admin/employee	POST	0
+TC035	TC006	验证性别字段传入非法值（如“其他”），创建失败（等价类-无效）	/admin/employee	POST	0
+TC035	TC007	验证身份证号字段格式不正确（如19位），创建失败（边界值）	/admin/employee	POST	0
+TC035	TC008	验证必填字段缺失（如缺少name字段），创建失败（异常场景）	/admin/employee	POST	0
+TC035	TC009	验证请求体为JSON格式错误（如缺少引号），创建失败（异常场景）	/admin/employee	POST	
+TC035	TC010	验证用户名已存在，创建失败（业务异常）	/admin/employee	POST	0
+TC047	正常查询所有员工（默认分页）	/admin/employee/page	GET	name=&page=1&pageSize=10	成功返回员工列表，包含分页信息
+TC047	按姓名精确查询（存在记录）	/admin/employee/page	GET	name=张三&page=1&pageSize=10	成功返回包含“张三”的员工列表
+TC047	按姓名模糊查询（存在记录）	/admin/employee/page	GET	name=张&page=1&pageSize=10	成功返回姓名包含“张”的员工列表
+TC047	按姓名查询（无匹配记录）	/admin/employee/page	GET	name=不存在的名字&page=1&pageSize=10	成功返回空列表，total为0
+TC047	分页参数边界值（page=1, pageSize=1）	/admin/employee/page	GET	name=&page=1&pageSize=1	成功返回1条记录，分页信息正确
+TC047	分页参数边界值（page=9999, pageSize=100）	/admin/employee/page	GET	name=&page=9999&pageSize=100	成功返回空列表，total为当前总数
+TC047	pageSize为负数（异常场景）	/admin/employee/page	GET	name=&page=1&pageSize=-1	请求参数无效，pageSize不能为负
+TC047	page为0（边界值异常）	/admin/employee/page	GET	name=&page=0&pageSize=10	请求参数无效，page应从1开始
+TC047	pageSize超过最大限制（如1000）	/admin/employee/page	GET	name=&page=1&pageSize=1000	请求参数无效，pageSize超出允许范围
+TC047	name参数包含特殊字符（SQL注入尝试）	/admin/employee/page	GET	name=1' OR '1'='1&page=1&pageSize=10	成功返回，无SQL注入风险（或返回空列表）
+TC057	正常启用员工	/admin/employee/status/1?id=1001	POST	status=1, id=1001	员工状态修改成功，状态变更为启用
+TC057	正常禁用员工	/admin/employee/status/0?id=1002	POST	status=0, id=1002	员工状态修改成功，状态变更为禁用
+TC057	status参数值无效（非0/1）	/admin/employee/status/2?id=1003	POST	status=2, id=1003	请求参数status值无效，必须为0或1
+TC057	status参数值为负数	/admin/employee/status/-1?id=1004	POST	status=-1, id=1004	请求参数status值无效，必须为0或1
+TC057	id参数为0（边界值）	/admin/employee/status/1?id=0	POST	status=1, id=0	员工ID无效，必须为正整数
+TC057	id参数为负数（边界值）	/admin/employee/status/0?id=-1	POST	status=0, id=-1	员工ID无效，必须为正整数
+TC057	id参数不存在（非数字）	/admin/employee/status/1?id=abc	POST	status=1, id=abc	请求参数id格式错误，必须为数字
+TC057	id对应员工不存在	/admin/employee/status/1?id=99999	POST	status=1, id=99999	未找到指定员工，无法修改状态
+TC065	验证新增分类成功（正常值）	/admin/employee	PUT	{"name":"测试分类","type":1,"sort":0,"status":1}	成功创建分类
+TC065	验证分类名称边界值（20个字符）	/admin/employee	PUT	{"name":"一二三四五六七八九十1234567890","type":2,"sort":9999,"status":0}	成功创建分类
+TC065	验证分类类型为无效值（3）	/admin/employee	PUT	{"name":"测试分类","type":3,"sort":0,"status":1}	分类类型无效，必须为1或2
+TC065	验证排序号超出最大值（10000）	/admin/employee	PUT	{"name":"测试分类","type":1,"sort":10000,"status":1}	排序号超出范围
+TC065	验证排序号为负数（-1）	/admin/employee	PUT	{"name":"测试分类","type":2,"sort":-1,"status":0}	排序号不能为负数
+TC065	验证分类名称为空字符串	/admin/employee	PUT	{"name":"","type":1,"sort":0,"status":1}	分类名称不能为空
+TC065	验证缺少必填字段（缺失name）	/admin/employee	PUT	{"type":1,"sort":0,"status":1}	缺少必填字段：name
+TC065	验证请求体为JSON格式错误（非标准JSON）	/admin/employee	PUT	{name:"测试分类",type:1}	请求体格式错误，无法解析
+TC073	用例编号	用例标题	接口路径	请求方法	预期业务码
+TC073	:---	:---	:---	:---	:---
+TC073	TC-001	正常创建菜品分类	/admin/category	POST	1
+TC073	TC-002	正常创建套餐分类	/admin/category	POST	1
+TC073	TC-003	必填项 name 为空	/admin/category	POST	0
+TC073	TC-004	type 字段为无效枚举值	/admin/category	POST	0
+TC073	TC-005	sort 字段为边界值 0	/admin/category	POST	1
+TC073	TC-006	sort 字段为边界值 999999	/admin/category	POST	1
+TC073	TC-007	sort 字段为负数	/admin/category	POST	0
+TC073	TC-008	创建重复名称的分类	/admin/category	POST	0
+TC073	TC-009	请求体中缺少必填字段	/admin/category	POST	0
+TC073	TC-010	请求体为空的 JSON	/admin/category	POST	0
+TC085	删除存在的分类（正常场景）	/admin/category	DELETE	{"id": 1}	删除成功
+TC085	删除不存在的分类	/admin/category	DELETE	{"id": 99999}	分类不存在
+TC085	删除已删除的分类（幂等性）	/admin/category	DELETE	{"id": 1}	删除成功（或返回已删除状态）
+TC085	id为0（边界值）	/admin/category	DELETE	{"id": 0}	无效的分类ID
+TC085	id为负数（等价类无效）	/admin/category	DELETE	{"id": -1}	无效的分类ID
+TC085	id为浮点数（类型异常）	/admin/category	DELETE	{"id": 1.5}	参数类型错误
+TC085	id为字符串（类型异常）	/admin/category	DELETE	{"id": "abc"}	参数类型错误
+TC085	id为null（参数缺失）	/admin/category	DELETE	{}	缺少必要参数id
+TC085	未授权访问（无token）	/admin/category	DELETE	{"id": 1}	未授权
+TC085	删除关联了其他数据的分类	/admin/category	DELETE	{"id": 5}	该分类下存在关联数据，无法删除
+TC095	删除存在的分类	/admin/category	DELETE	id=1	分类删除成功
+TC095	删除不存在的分类	/admin/category	DELETE	id=9999	分类不存在
+TC095	id为负数	/admin/category	DELETE	id=-1	参数错误：id必须为正整数
+TC095	id为0	/admin/category	DELETE	id=0	参数错误：id必须为正整数
+TC095	id为最大整数值	/admin/category	DELETE	id=2147483647	分类不存在
+TC095	id为空字符串	/admin/category	DELETE	id=	缺少必填参数id
+TC095	id为非数字字符	/admin/category	DELETE	id=abc	参数错误：id必须为数字
+TC095	id为小数	/admin/category	DELETE	id=1.5	参数错误：id必须为整数
+TC095	删除已删除的分类	/admin/category	DELETE	id=100	分类不存在
+TC095	id为超长数字	/admin/category	DELETE	id=9999999999999	参数错误：id超出范围
+TC105	用例编号	用例标题	接口路径	请求方法	预期业务码
+TC105	:---	:---	:---	:---	:---
+TC105	TC-001	正常更新分类（所有字段）	/admin/category	PUT	200
+TC105	TC-002	正常更新分类（仅更新名称）	/admin/category	PUT	200
+TC105	TC-003	更新不存在的分类ID	/admin/category	PUT	404
+TC105	TC-004	更新分类时ID为空	/admin/category	PUT	400
+TC105	TC-005	更新分类时名称为空字符串	/admin/category	PUT	400
+TC105	TC-006	更新分类时名称超长（边界值101字符）	/admin/category	PUT	400
+TC105	TC-007	更新分类时名称长度等于边界值（100字符）	/admin/category	PUT	200
+TC105	TC-008	更新分类时sort为负数	/admin/category	PUT	400
+TC105	TC-009	更新分类时status为非法值（如2）	/admin/category	PUT	400
+TC105	TC-010	更新分类时传入额外无关字段	/admin/category	PUT	200

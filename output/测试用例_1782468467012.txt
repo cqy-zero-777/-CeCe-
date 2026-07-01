@@ -1,0 +1,113 @@
+用例编号	用例标题	接口路径	请求方法	请求参数	预期结果
+TC001	登录成功-有效用户名和密码	/admin/employee/login	POST	{"username":"admin","password":"123456"}	登录成功，返回token和员工信息
+TC001	登录失败-密码错误	/admin/employee/login	POST	{"username":"admin","password":"wrongpass"}	账号或密码错误
+TC001	登录失败-用户名不存在	/admin/employee/login	POST	{"username":"nonexist_user","password":"123456"}	账号不存在
+TC001	登录失败-密码为空	/admin/employee/login	POST	{"username":"admin","password":""}	密码不能为空
+TC001	登录失败-用户名为空	/admin/employee/login	POST	{"username":"","password":"123456"}	用户名不能为空
+TC001	登录失败-密码长度边界（5位）	/admin/employee/login	POST	{"username":"admin","password":"12345"}	密码长度不符合要求（假设最小6位）
+TC001	登录失败-密码长度边界（21位）	/admin/employee/login	POST	{"username":"admin","password":"123456789012345678901"}	密码长度不符合要求（假设最大20位）
+TC001	登录异常-请求方法错误（GET）	/admin/employee/login	GET	{}	请求方法不允许
+TC009	正常登录（有效用户名和密码）	/admin/employee/login	POST	{"username":"admin","password":"123456"}	登录成功，返回有效token
+TC009	密码错误（有效用户名，错误密码）	/admin/employee/login	POST	{"username":"admin","password":"wrongpass"}	用户名或密码错误
+TC009	用户名不存在（无效用户名）	/admin/employee/login	POST	{"username":"nonexist","password":"123456"}	用户名或密码错误
+TC009	用户名为空（空字符串）	/admin/employee/login	POST	{"username":"","password":"123456"}	用户名不能为空
+TC009	密码为空（空字符串）	/admin/employee/login	POST	{"username":"admin","password":""}	密码不能为空
+TC009	用户名最小长度边界（1个字符）	/admin/employee/login	POST	{"username":"a","password":"123456"}	假设1字符用户名存在，则登录成功；否则应返回401
+TC009	密码最大长度边界（假设最大32字符）	/admin/employee/login	POST	{"username":"admin","password":"12345678901234567890123456789012"}	密码长度合法，登录成功（若实际限制不同则调整）
+TC009	请求体缺失username字段	/admin/employee/login	POST	{"password":"123456"}	缺少必填字段：username
+TC009	请求体为JSON空对象	/admin/employee/login	POST	{}	缺少必填字段：username和password
+TC009	密码包含特殊字符或空格	/admin/employee/login	POST	{"username":"admin","password":"pass word!@#"}	密码不匹配，返回用户名或密码错误（或根据系统安全策略）
+TC019	用例编号	用例标题	接口路径	请求方法	预期业务码
+TC019	:---	:---	:---	:---	:---
+TC019	TC-LOGOUT-001	正常登出-有效Token（有效等价类）	/admin/employee/logout	POST	1
+TC019	TC-LOGOUT-002	正常登出-带员工ID参数（边界值：最小ID）	/admin/employee/logout	POST	1
+TC019	TC-LOGOUT-003	正常登出-带员工ID参数（边界值：最大ID）	/admin/employee/logout	POST	1
+TC019	TC-LOGOUT-004	异常登出-未携带Token（无效等价类）	/admin/employee/logout	POST	0
+TC019	TC-LOGOUT-005	异常登出-Token已过期（无效等价类）	/admin/employee/logout	POST	0
+TC019	TC-LOGOUT-006	异常登出-Token格式错误（无效等价类）	/admin/employee/logout	POST	0
+TC019	TC-LOGOUT-007	异常登出-重复登出（异常场景）	/admin/employee/logout	POST	0
+TC019	TC-LOGOUT-008	异常登出-请求方法错误（异常场景）	/admin/employee/logout	GET	
+TC019	TC-LOGOUT-009	异常登出-请求体格式错误（异常场景）	/admin/employee/logout	POST	0
+TC019	TC-LOGOUT-010	异常登出-服务端内部错误（异常场景）	/admin/employee/logout	POST	
+TC031	创建员工-所有字段合法	POST /admin/employee	{"username":"lisi","name":"李四","phone":"13912345678","sex":"男","idNumber":"110101199003071234"}	200	1
+TC031	创建员工-用户名为空	POST /admin/employee	{"username":"","name":"王五","phone":"13712345678","sex":"女","idNumber":"110101199005081234"}	400	1001
+TC031	创建员工-用户名超长(边界值)	POST /admin/employee	{"username":"zhangsanzhangsanzhangsanzhangsanzhangsan","name":"张三","phone":"13612345678","sex":"男","idNumber":"110101199001011234"}	400	1002
+TC031	创建员工-手机号格式无效(异常场景)	POST /admin/employee	{"username":"wangwu","name":"王五","phone":"12345","sex":"女","idNumber":"110101199005081234"}	400	1003
+TC031	创建员工-身份证号无效(等价类划分-无效)	POST /admin/employee	{"username":"zhaoliu","name":"赵六","phone":"13512345678","sex":"男","idNumber":"123456789012345678"}	400	1004
+TC031	创建员工-性别字段非法(异常场景)	POST /admin/employee	{"username":"sunqi","name":"孙七","phone":"13412345678","sex":"未知","idNumber":"110101199007081234"}	400	1005
+TC031	创建员工-手机号超长(边界值)	POST /admin/employee	{"username":"zhouba","name":"周八","phone":"138001380001","sex":"男","idNumber":"110101199001011234"}	400	1003
+TC031	创建员工-姓名包含特殊字符(异常场景)	POST /admin/employee	{"username":"wujiu","name":"吴九@!","phone":"13312345678","sex":"女","idNumber":"110101199008091234"}	400	1006
+TC031	创建员工-重复用户名(异常场景)	POST /admin/employee	{"username":"zhangsan","name":"张三","phone":"13212345678","sex":"男","idNumber":"110101199002031234"}	409	1007
+TC031	创建员工-请求体为空(异常场景)	POST /admin/employee	{}	400	1008
+TC041	正常分页查询（无筛选条件）	/admin/employee/page	GET	page=1&pageSize=10	成功返回员工列表，包含分页信息
+TC041	使用姓名精确匹配筛选	/admin/employee/page	GET	name=张三&page=1&pageSize=10	成功返回匹配姓名的员工列表
+TC041	使用部分姓名模糊匹配筛选	/admin/employee/page	GET	name=张&page=1&pageSize=10	成功返回姓张的员工列表
+TC041	查询空结果（姓名无匹配）	/admin/employee/page	GET	name=不存在的员工&page=1&pageSize=10	成功返回空列表
+TC041	page为最小值1（边界值）	/admin/employee/page	GET	page=1&pageSize=10	成功返回第一页数据
+TC041	pageSize为最大值100（边界值）	/admin/employee/page	GET	page=1&pageSize=100	成功返回最多100条数据
+TC041	page为负数（异常场景）	/admin/employee/page	GET	page=-1&pageSize=10	参数page不能为负数
+TC041	pageSize为0（边界值异常）	/admin/employee/page	GET	page=1&pageSize=0	参数pageSize必须大于0
+TC041	pageSize超过最大限制（异常场景）	/admin/employee/page	GET	page=1&pageSize=1000	参数pageSize不能超过100
+TC041	缺少必填参数page（异常场景）	/admin/employee/page	GET	pageSize=10	缺少必填参数page
+TC051	正常启用员工（有效员工ID，status=1）	/admin/employee/status/1?id=100	POST	id=100, status=1	员工启用成功
+TC051	正常禁用员工（有效员工ID，status=0）	/admin/employee/status/0?id=100	POST	id=100, status=0	员工禁用成功
+TC051	边界值-员工ID为最小有效值	/admin/employee/status/1?id=1	POST	id=1, status=1	员工启用成功
+TC051	边界值-员工ID为最大有效值	/admin/employee/status/0?id=999999	POST	id=999999, status=0	员工禁用成功
+TC051	异常场景-无效的status值（如2）	/admin/employee/status/2?id=100	POST	id=100, status=2	请求参数错误，status只能为0或1
+TC051	异常场景-员工ID不存在	/admin/employee/status/1?id=99999	POST	id=99999, status=1	未找到该员工
+TC051	异常场景-缺少必填参数id	/admin/employee/status/1	POST	status=1	缺少必填参数id
+TC051	异常场景-id参数为非数字类型	/admin/employee/status/0?id=abc	POST	id=abc, status=0	参数id格式错误
+TC051	异常场景-未登录或token失效	/admin/employee/status/1?id=100	POST	id=100, status=1	未授权，请先登录
+TC051	异常场景-无权限操作（非管理员）	/admin/employee/status/0?id=100	POST	id=100, status=0	权限不足，无法修改员工状态
+TC061	正常新增有效分类	/admin/employee	PUT	{"name":"套餐A","type":"套餐","sort":1,"status":1}	分类新增成功
+TC061	分类名称为空（无效等价类）	/admin/employee	PUT	{"name":"","type":"套餐","sort":1,"status":1}	分类名称不能为空
+TC061	分类类型为空（无效等价类）	/admin/employee	PUT	{"name":"套餐A","type":"","sort":1,"status":1}	分类类型不能为空
+TC061	排序值为0（边界值最小值）	/admin/employee	PUT	{"name":"套餐B","type":"菜品","sort":0,"status":1}	分类新增成功
+TC061	排序值为负数（异常场景）	/admin/employee	PUT	{"name":"套餐C","type":"套餐","sort":-1,"status":1}	排序值必须为非负整数
+TC061	状态值为0（边界值最小值）	/admin/employee	PUT	{"name":"套餐D","type":"菜品","sort":2,"status":0}	分类新增成功
+TC061	状态值为2（超出枚举范围）	/admin/employee	PUT	{"name":"套餐E","type":"套餐","sort":3,"status":2}	状态值无效，仅支持0或1
+TC061	分类名称长度超过255字符（边界值+1）	/admin/employee	PUT	{"name":"A...（共256个字符）","type":"套餐","sort":4,"status":1}	分类名称长度不能超过255
+TC061	请求体为空（异常场景）	/admin/employee	PUT	{}	请求体不能为空，缺少必填字段
+TC061	重复分类名称（业务异常）	/admin/employee	PUT	{"name":"套餐A","type":"套餐","sort":5,"status":1}	分类名称已存在
+TC071	用例编号	用例标题	接口路径	请求方法	预期业务码
+TC071	:---	:---	:---	:---	:---
+TC071	TC-CATEGORY-001	正常创建菜品分类（所有字段有效）	/admin/category	POST	200
+TC071	TC-CATEGORY-002	正常创建套餐分类（type边界值）	/admin/category	POST	200
+TC071	TC-CATEGORY-003	name为空字符串（无效等价类）	/admin/category	POST	400
+TC071	TC-CATEGORY-004	name长度超过限制（边界值+1）	/admin/category	POST	400
+TC071	TC-CATEGORY-005	type为0（无效等价类，边界值-1）	/admin/category	POST	400
+TC071	TC-CATEGORY-006	type为3（无效等价类，边界值+1）	/admin/category	POST	400
+TC071	TC-CATEGORY-007	sort为-1（无效等价类，边界值-1）	/admin/category	POST	400
+TC071	TC-CATEGORY-008	sort为0（边界值，有效等价类）	/admin/category	POST	200
+TC071	TC-CATEGORY-009	缺少必填字段name	/admin/category	POST	400
+TC071	TC-CATEGORY-010	请求体格式错误（非JSON）	/admin/category	POST	400
+TC083	正常分页查询-无筛选条件	/admin/category/page	GET	name=&type=&page=1&pageSize=10	成功返回分类列表，默认第一页10条数据
+TC083	正常分页查询-按名称筛选	/admin/category/page	GET	name=电子产品&type=&page=1&pageSize=10	成功返回名称包含“电子产品”的分类列表
+TC083	正常分页查询-按类型筛选	/admin/category/page	GET	name=&type=1&page=1&pageSize=10	成功返回类型为1的分类列表
+TC083	正常分页查询-组合筛选	/admin/category/page	GET	name=书籍&type=2&page=1&pageSize=10	成功返回名称包含“书籍”且类型为2的分类列表
+TC083	边界值page=1最小页	/admin/category/page	GET	name=&type=&page=1&pageSize=10	成功返回第一页数据
+TC083	边界值pageSize=1最小每页条数	/admin/category/page	GET	name=&type=&page=1&pageSize=1	成功返回单条数据
+TC083	边界值pageSize=100最大每页条数	/admin/category/page	GET	name=&type=&page=1&pageSize=100	成功返回100条数据
+TC083	异常场景-page=0无效值	/admin/category/page	GET	name=&type=&page=0&pageSize=10	请求参数错误，页码必须大于0
+TC083	异常场景-pageSize=0无效值	/admin/category/page	GET	name=&type=&page=1&pageSize=0	请求参数错误，每页条数必须大于0
+TC083	异常场景-pageSize=101超出最大值	/admin/category/page	GET	name=&type=&page=1&pageSize=101	请求参数错误，每页条数不能超过100
+TC093	删除存在的分类	/admin/category	DELETE	id=1	成功删除分类
+TC093	删除不存在的分类	/admin/category	DELETE	id=99999	分类不存在
+TC093	id参数为空	/admin/category	DELETE	id=	id参数缺失
+TC093	id参数为负数	/admin/category	DELETE	id=-1	id参数无效
+TC093	id参数为0	/admin/category	DELETE	id=0	id参数无效
+TC093	id参数为字符串	/admin/category	DELETE	id=abc	id参数格式错误
+TC093	id参数为浮点数	/admin/category	DELETE	id=1.5	id参数格式错误
+TC093	id参数为最大整数值	/admin/category	DELETE	id=2147483647	成功删除（假设存在）
+TC093	不提供id参数	/admin/category	DELETE		缺少必要参数
+TC093	id参数为特殊字符	/admin/category	DELETE	id=@#$	id参数格式错误
+TC103	正常更新分类，所有字段有效	/admin/category	PUT	{"id": 10, "name": "电子产品", "sortOrder": 1}	分类更新成功
+TC103	更新分类时，分类ID不存在	/admin/category	PUT	{"id": 99999, "name": "不存在的分类"}	分类不存在
+TC103	更新分类时，分类名称为空字符串	/admin/category	PUT	{"id": 10, "name": ""}	分类名称不能为空
+TC103	更新分类时，分类名称超长（边界值+1）	/admin/category	PUT	{"id": 10, "name": "A" * 51}	分类名称长度不能超过50个字符
+TC103	更新分类时，分类ID为0（边界值）	/admin/category	PUT	{"id": 0, "name": "测试分类"}	分类ID必须大于0
+TC103	更新分类时，分类ID为负数（无效等价类）	/admin/category	PUT	{"id": -5, "name": "测试分类"}	分类ID必须为正整数
+TC103	更新分类时，请求体缺少必填字段ID	/admin/category	PUT	{"name": "测试分类"}	缺少必填参数：id
+TC103	更新分类时，请求体包含多余字段	/admin/category	PUT	{"id": 10, "name": "测试分类", "extraField": "无用"}	分类更新成功（忽略多余字段）
+TC103	更新分类时，sortOrder为负数（无效等价类）	/admin/category	PUT	{"id": 10, "name": "测试分类", "sortOrder": -1}	排序值不能为负数
+TC103	更新分类时，请求体为非法JSON格式	/admin/category	PUT	{"id": 10, "name": }	请求体格式错误

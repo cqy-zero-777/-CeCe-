@@ -1,0 +1,97 @@
+用例编号	测试模块	测试点	用例标题	测试接口	请求方法	前置条件	具体操作	请求参数	预期状态码	预期业务码	预期结果	实际结果
+TC001	EMPLOYEE	正常登录	登录成功	/admin/employee/login	POST	无	发送有效用户名和密码的登录请求	{"username":"admin","password":"123456"}	200	1	返回token和用户信息	null
+TC001	EMPLOYEE	正常登录	登录成功-边界值用户名	/admin/employee/login	POST	无	发送用户名长度为1的登录请求	{"username":"a","password":"123456"}	200	1	返回token和用户信息	null
+TC001	EMPLOYEE	参数校验	登录失败-空用户名	/admin/employee/login	POST	无	发送用户名为空的登录请求	{"username":"","password":"123456"}	400	0	提示用户名不能为空	null
+TC001	EMPLOYEE	参数校验	登录失败-空密码	/admin/employee/login	POST	无	发送密码为空的登录请求	{"username":"admin","password":""}	400	0	提示密码不能为空	null
+TC001	EMPLOYEE	参数校验	登录失败-用户名不存在	/admin/employee/login	POST	无	发送不存在的用户名登录请求	{"username":"nonexist","password":"123456"}	401	0	提示用户名或密码错误	null
+TC001	EMPLOYEE	异常场景	登录失败-密码错误	/admin/employee/login	POST	无	发送正确用户名但错误密码的登录请求	{"username":"admin","password":"wrongpass"}	401	0	提示用户名或密码错误	null
+TC001	EMPLOYEE	异常场景	登录失败-请求体格式错误	/admin/employee/login	POST	无	发送非JSON格式的请求体	{"username":"admin"}	400	0	提示请求格式错误	null
+TC001	EMPLOYEE	异常场景	登录失败-密码为null	/admin/employee/login	POST	无	发送密码字段为null的登录请求	{"username":"admin","password":null}	400	0	提示密码不能为空	null
+TC009	EMPLOYEE	正常登录	正确用户名密码登录成功	/admin/employee/login	POST	用户已注册（用户名admin，密码123456）	发送POST请求，请求体包含正确的用户名和密码	{"username":"admin","password":"123456"}	200	null	返回token，登录成功	null
+TC009	EMPLOYEE	参数校验	用户名缺失	/admin/employee/login	POST	无	发送POST请求，请求体不包含username字段	{"password":"123456"}	400	null	返回参数校验失败错误信息	null
+TC009	EMPLOYEE	参数校验	密码缺失	/admin/employee/login	POST	无	发送POST请求，请求体不包含password字段	{"username":"admin"}	400	null	返回参数校验失败错误信息	null
+TC009	EMPLOYEE	参数校验	用户名和密码均为空	/admin/employee/login	POST	无	发送POST请求，请求体中的username和password字段均为空字符串	{"username":"","password":""}	400	null	返回参数校验失败错误信息	null
+TC009	EMPLOYEE	边界值	密码长度等于最小值（假设为6）	/admin/employee/login	POST	用户已注册（用户名admin，密码123456）	发送POST请求，密码为6位合法字符	{"username":"admin","password":"123456"}	200	null	返回token，登录成功	null
+TC009	EMPLOYEE	边界值	密码长度等于最大值（假设为20）	/admin/employee/login	POST	用户已注册（用户名admin，密码12345678901234567890）	发送POST请求，密码为20位合法字符	{"username":"admin","password":"12345678901234567890"}	200	null	返回token，登录成功	null
+TC009	EMPLOYEE	异常场景	用户名不存在	/admin/employee/login	POST	无	发送POST请求，使用未注册的用户名	{"username":"nonexist","password":"123456"}	401	null	返回用户不存在或密码错误提示	null
+TC009	EMPLOYEE	异常场景	密码错误	/admin/employee/login	POST	用户已注册（用户名admin，密码123456）	发送POST请求，密码错误	{"username":"admin","password":"wrongpass"}	401	null	返回用户不存在或密码错误提示	null
+TC017	EMPLOYEE	正常退出	未登录时退出（无效token）	/admin/employee/logout	POST	用户未登录，无token	1. 准备空token或无效token；2. 发送POST请求	无	401	1001	返回未授权错误，提示token无效或缺失	null
+TC017	EMPLOYEE	正常退出	已登录用户正常退出	/admin/employee/logout	POST	用户已登录，获取有效token	1. 使用有效token；2. 发送POST请求	无	200	200	退出成功，返回成功消息，token失效	null
+TC017	EMPLOYEE	异常场景	重复退出（同一token多次调用）	/admin/employee/logout	POST	用户已登录，token有效	1. 第一次退出成功；2. 使用同一token再次发送POST请求	无	401	1001	返回token已失效或未授权错误	null
+TC017	EMPLOYEE	参数校验	请求体包含额外参数	/admin/employee/logout	POST	用户已登录，获取有效token	1. 在请求体中添加多余参数（如{"reason":"test"}）；2. 发送POST请求	{"reason":"test"}	200	200	接口忽略额外参数，仍退出成功	null
+TC017	EMPLOYEE	边界值	token恰好过期时退出	/admin/employee/logout	POST	用户token有效期刚好结束	1. 等待token过期；2. 使用过期token发送POST请求	无	401	1002	返回token过期错误，提示重新登录	null
+TC017	EMPLOYEE	边界值	token为空字符串	/admin/employee/logout	POST	用户未登录	1. 设置Authorization头为空字符串；2. 发送POST请求	无	401	1001	返回未授权错误，提示token缺失	null
+TC017	EMPLOYEE	异常场景	HTTP方法错误（使用GET）	/admin/employee/logout	POST	用户已登录，获取有效token	1. 使用有效token；2. 发送GET请求到同一URL	无	405	null	返回方法不允许错误	null
+TC017	EMPLOYEE	异常场景	服务器内部错误（模拟数据库故障）	/admin/employee/logout	POST	用户已登录，但后端服务异常	1. 模拟数据库连接失败或Redis故障；2. 发送POST请求	无	500	5000	返回服务器内部错误，提示稍后重试	null
+TC025	EMPLOYEE	正常登录	新增员工-成功	/admin/employee	POST	用户已登录并获取token	1. 使用有效的token。2. 发送包含所有必填字段的合法请求体。	{"username": "zhangsan", "name": "张三", "phone": "13800138000", "sex": "男", "idNumber": "110101199001011234"}	200	1	返回成功，包含新员工ID，数据库新增记录	null
+TC025	EMPLOYEE	参数校验	新增员工-用户名为空	/admin/employee	POST	用户已登录并获取token	1. 使用有效的token。2. 发送请求体，其中username字段为空字符串。	{"username": "", "name": "张三", "phone": "13800138000", "sex": "男", "idNumber": "110101199001011234"}	400	0	返回参数校验失败提示，如“用户名不能为空”	null
+TC025	EMPLOYEE	参数校验	新增员工-手机号格式错误	/admin/employee	POST	用户已登录并获取token	1. 使用有效的token。2. 发送请求体，其中phone字段为非法格式（如123）。	{"username": "lisi", "name": "李四", "phone": "123", "sex": "男", "idNumber": "110101199001011235"}	400	0	返回参数校验失败提示，如“手机号格式不正确”	null
+TC025	EMPLOYEE	参数校验	新增员工-身份证号格式错误	/admin/employee	POST	用户已登录并获取token	1. 使用有效的token。2. 发送请求体，其中idNumber字段为非法格式（如123）。	{"username": "wangwu", "name": "王五", "phone": "13900139000", "sex": "女", "idNumber": "123"}	400	0	返回参数校验失败提示，如“身份证号格式不正确”	null
+TC025	EMPLOYEE	边界值	新增员工-用户名长度边界值（1位）	/admin/employee	POST	用户已登录并获取token	1. 使用有效的token。2. 发送请求体，其中username字段为1个字符。	{"username": "z", "name": "测试", "phone": "13700137000", "sex": "男", "idNumber": "110101199001011236"}	200	1	返回成功，数据库新增记录	null
+TC025	EMPLOYEE	边界值	新增员工-用户名长度边界值（32位）	/admin/employee	POST	用户已登录并获取token	1. 使用有效的token。2. 发送请求体，其中username字段为32个字符。	{"username": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p", "name": "边界测试", "phone": "13600136000", "sex": "男", "idNumber": "110101199001011237"}	200	1	返回成功，数据库新增记录	null
+TC025	EMPLOYEE	异常场景	新增员工-未登录（无token）	/admin/employee	POST	无	1. 不携带token。2. 发送一个合法的请求体。	{"username": "testuser", "name": "测试", "phone": "13500135000", "sex": "女", "idNumber": "110101199001011238"}	401	0	返回认证失败提示，如“未登录”或“Token无效”	null
+TC025	EMPLOYEE	异常场景	新增员工-用户名已存在	/admin/employee	POST	用户已登录并获取token；数据库中已存在用户名为“zhangsan”的记录	1. 使用有效的token。2. 发送请求体，其中username字段为已存在的“zhangsan”。	{"username": "zhangsan", "name": "重复", "phone": "13400134000", "sex": "男", "idNumber": "110101199001011239"}	409	1001	返回业务错误提示，如“用户名已存在”	null
+TC025	EMPLOYEE	异常场景	新增员工-身份证号已存在	/admin/employee	POST	用户已登录并获取token；数据库中已存在身份证号为“110101199001011234”的记录	1. 使用有效的token。2. 发送请求体，其中idNumber字段为已存在的“110101199001011234”。	{"username": "newuser", "name": "重复身份证", "phone": "13300133000", "sex": "女", "idNumber": "110101199001011234"}	409	1002	返回业务错误提示，如“身份证号已存在”	null
+TC034	EMPLOYEE	正常查询	分页查询员工列表（默认参数）	/admin/employee/page	GET	已登录获取token	使用默认分页参数发起请求	name=&page=1&pageSize=10	200	200	返回第一页10条员工数据	null
+TC034	EMPLOYEE	正常查询	分页查询员工列表（指定姓名）	/admin/employee/page	GET	已登录获取token	设置name为“张三”，其余参数默认	name=张三&page=1&pageSize=10	200	200	返回包含“张三”的员工列表	null
+TC034	EMPLOYEE	边界值	分页查询第一页最小页数	/admin/employee/page	GET	已登录获取token	设置page为1，pageSize为1	name=&page=1&pageSize=1	200	200	返回第一页1条数据	null
+TC034	EMPLOYEE	边界值	分页查询最大pageSize	/admin/employee/page	GET	已登录获取token	设置pageSize为100，page为1	name=&page=1&pageSize=100	200	200	返回第一页最多100条数据	null
+TC034	EMPLOYEE	边界值	分页查询pageSize为0	/admin/employee/page	GET	已登录获取token	设置pageSize为0，page为1	name=&page=1&pageSize=0	400	400	参数校验失败，提示pageSize不能小于1	null
+TC034	EMPLOYEE	异常场景	未登录访问接口	/admin/employee/page	GET	无token	不携带token直接发起请求	name=&page=1&pageSize=10	401	401	未授权，提示需要登录	null
+TC034	EMPLOYEE	异常场景	token过期	/admin/employee/page	GET	token已过期	使用过期token发起请求	name=&page=1&pageSize=10	401	401	token无效，提示重新登录	null
+TC034	EMPLOYEE	异常场景	参数类型错误	/admin/employee/page	GET	已登录获取token	page传入非数字字符串	name=&page=abc&pageSize=10	400	400	参数校验失败，提示page必须为数字	null
+TC042	EMPLOYEE	正常场景	启用已禁用的员工	/admin/employee/status/{status}	POST	已登录获取token，存在一个id=5且status=0的员工	1. 构造请求URL为/admin/employee/status/1?id=5；2. 发送POST请求	status=1, id=5	200	200	员工状态成功设置为启用，返回成功信息	null
+TC042	EMPLOYEE	正常场景	禁用已启用的员工	/admin/employee/status/{status}	POST	已登录获取token，存在一个id=3且status=1的员工	1. 构造请求URL为/admin/employee/status/0?id=3；2. 发送POST请求	status=0, id=3	200	200	员工状态成功设置为禁用，返回成功信息	null
+TC042	EMPLOYEE	参数校验	status参数为非法字符（非0/1）	/admin/employee/status/{status}	POST	已登录获取token，存在一个有效员工id=2	1. 构造请求URL为/admin/employee/status/2?id=2；2. 发送POST请求	status=2, id=2	400	null	返回参数错误提示，status只能为0或1	null
+TC042	EMPLOYEE	边界值	status参数为边界值0（禁用）	/admin/employee/status/{status}	POST	已登录获取token，存在一个id=10且status=1的员工	1. 构造请求URL为/admin/employee/status/0?id=10；2. 发送POST请求	status=0, id=10	200	200	成功禁用员工	null
+TC042	EMPLOYEE	边界值	status参数为边界值1（启用）	/admin/employee/status/{status}	POST	已登录获取token，存在一个id=7且status=0的员工	1. 构造请求URL为/admin/employee/status/1?id=7；2. 发送POST请求	status=1, id=7	200	200	成功启用员工	null
+TC042	EMPLOYEE	异常场景	id参数为空	/admin/employee/status/{status}	POST	已登录获取token	1. 构造请求URL为/admin/employee/status/1?id=；2. 发送POST请求	status=1, id=	400	null	返回参数缺失错误，id不能为空	null
+TC042	EMPLOYEE	异常场景	id参数为负数	/admin/employee/status/{status}	POST	已登录获取token	1. 构造请求URL为/admin/employee/status/1?id=-5；2. 发送POST请求	status=1, id=-5	400	null	返回参数错误提示，id必须为正整数	null
+TC042	EMPLOYEE	异常场景	id对应的员工不存在	/admin/employee/status/{status}	POST	已登录获取token	1. 构造请求URL为/admin/employee/status/1?id=9999；2. 发送POST请求	status=1, id=9999	404	null	返回员工不存在错误信息	null
+TC042	EMPLOYEE	异常场景	未登录（无token）	/admin/employee/status/{status}	POST	无	1. 构造请求URL为/admin/employee/status/1?id=1；2. 不携带token发送POST请求	status=1, id=1	401	null	返回未授权错误，提示需要登录	null
+TC051	EMPLOYEE	正常新增	成功新增分类	/admin/employee	PUT	用户已登录，具有管理员权限	发送PUT请求，包含必填字段name和type	{"name":"川菜","type":"菜品分类"}	200	1	返回成功，分类新增成功，数据库中可查到该记录	null
+TC051	EMPLOYEE	参数校验	必填字段name为空	/admin/employee	PUT	用户已登录	发送PUT请求，name字段为空字符串	{"name":"","type":"菜品分类"}	400	0	返回错误提示，name不能为空	null
+TC051	EMPLOYEE	参数校验	type字段为非法值	/admin/employee	PUT	用户已登录	发送PUT请求，type字段传入不存在的类型	{"name":"粤菜","type":"非法类型"}	400	0	返回错误提示，type值无效	null
+TC051	EMPLOYEE	边界值	name字段长度为1	/admin/employee	PUT	用户已登录	发送PUT请求，name为1个字符	{"name":"辣","type":"菜品分类"}	200	1	新增成功	null
+TC051	EMPLOYEE	边界值	name字段长度为32	/admin/employee	PUT	用户已登录	发送PUT请求，name为32个字符	{"name":"a1234567890123456789012345678901","type":"菜品分类"}	200	1	新增成功	null
+TC051	EMPLOYEE	边界值	name字段长度为33	/admin/employee	PUT	用户已登录	发送PUT请求，name为33个字符	{"name":"a12345678901234567890123456789012","type":"菜品分类"}	400	0	返回错误提示，name长度超限	null
+TC051	EMPLOYEE	异常场景	未登录访问	/admin/employee	PUT	未登录	直接发送PUT请求，不带token	{"name":"湘菜","type":"菜品分类"}	401	null	返回未授权错误	null
+TC051	EMPLOYEE	异常场景	重复名称新增	/admin/employee	PUT	用户已登录，数据库中已存在名称为"川菜"的分类	发送PUT请求，name为已存在的"川菜"	{"name":"川菜","type":"菜品分类"}	409	0	返回冲突错误，提示分类名称已存在	null
+TC051	EMPLOYEE	异常场景	type字段缺失	/admin/employee	PUT	用户已登录	发送PUT请求，不传type字段	{"name":"鲁菜"}	400	0	返回错误提示，type为必填字段	null
+TC051	EMPLOYEE	异常场景	请求体为JSON格式错误	/admin/employee	PUT	用户已登录	发送PUT请求，body为非法JSON字符串	"{name:川菜}"	400	null	返回解析错误信息	null
+TC061	CATEGORY	正常新增	新增菜品分类成功	/admin/category	POST	用户已登录并获取token	发送有效请求体，name为“热销榜”，type为1，sort为1	{"name":"热销榜","type":1,"sort":1}	200	1	新增成功，返回分类ID	null
+TC061	CATEGORY	正常新增	新增套餐分类成功	/admin/category	POST	用户已登录并获取token	发送有效请求体，name为“精选套餐”，type为2，sort为5	{"name":"精选套餐","type":2,"sort":5}	200	1	新增成功，返回分类ID	null
+TC061	CATEGORY	边界值	新增分类时sort为最小值0	/admin/category	POST	用户已登录并获取token	发送请求体，name为“特价菜”，type为1，sort为0	{"name":"特价菜","type":1,"sort":0}	200	1	新增成功，返回分类ID	null
+TC061	CATEGORY	边界值	新增分类时sort为最大值9999	/admin/category	POST	用户已登录并获取token	发送请求体，name为“豪华套餐”，type为2，sort为9999	{"name":"豪华套餐","type":2,"sort":9999}	200	1	新增成功，返回分类ID	null
+TC061	CATEGORY	参数校验	新增分类时type为非法值3	/admin/category	POST	用户已登录并获取token	发送请求体，type为3（不在1或2范围内）	{"name":"测试","type":3,"sort":1}	400	1001	参数校验失败，提示type必须为1或2	null
+TC061	CATEGORY	异常场景	新增分类时name为空字符串	/admin/category	POST	用户已登录并获取token	发送请求体，name为""	{"name":"","type":1,"sort":1}	400	1002	参数校验失败，提示name不能为空	null
+TC061	CATEGORY	异常场景	新增分类时未携带token	/admin/category	POST	未登录	发送请求体，不携带Authorization头	{"name":"热销榜","type":1,"sort":1}	401	null	未授权，返回登录提示	null
+TC061	CATEGORY	异常场景	新增分类时name超长（100字符）	/admin/category	POST	用户已登录并获取token	发送请求体，name为100个字符的字符串	{"name":"a...a（100个字符）","type":1,"sort":1}	400	1003	参数校验失败，提示name长度超出限制	null
+TC069	CATEGORY	正常查询	查询所有分类（默认分页）	/admin/category/page	GET	已登录获取token	发送GET请求，不带name和type参数	page=1&pageSize=10	200	1	成功返回分页数据，分类列表不为空	null
+TC069	CATEGORY	正常查询	按名称精确查询	/admin/category/page	GET	已登录获取token	发送GET请求，name=蔬菜	name=蔬菜&page=1&pageSize=10	200	1	成功返回名称为“蔬菜”的分类列表	null
+TC069	CATEGORY	正常查询	按类型查询	/admin/category/page	GET	已登录获取token	发送GET请求，type=1	type=1&page=1&pageSize=10	200	1	成功返回类型为1的分类列表	null
+TC069	CATEGORY	边界值	pageSize为1（最小正数）	/admin/category/page	GET	已登录获取token	发送GET请求，pageSize=1	page=1&pageSize=1	200	1	成功返回1条数据	null
+TC069	CATEGORY	边界值	page为1（最小页数）	/admin/category/page	GET	已登录获取token	发送GET请求，page=1	page=1&pageSize=10	200	1	成功返回第一页数据	null
+TC069	CATEGORY	参数校验	pageSize为0（无效值）	/admin/category/page	GET	已登录获取token	发送GET请求，pageSize=0	page=1&pageSize=0	400	1001	返回参数错误提示，pageSize必须大于0	null
+TC069	CATEGORY	参数校验	page为负数	/admin/category/page	GET	已登录获取token	发送GET请求，page=-1	page=-1&pageSize=10	400	1001	返回参数错误提示，page必须大于等于1	null
+TC069	CATEGORY	异常场景	未登录访问	/admin/category/page	GET	无token	发送GET请求，不携带token	page=1&pageSize=10	401	2000	返回未授权提示，需先登录	null
+TC077	CATEGORY	正常删除	删除已存在的分类	/admin/category	DELETE	已登录获取token，且存在id=1的分类	使用token发送DELETE请求，id=1	id=1	200	1	删除成功，返回成功信息	null
+TC077	CATEGORY	参数校验	id参数为空	/admin/category	DELETE	已登录获取token	使用token发送DELETE请求，id参数为空	id=	400	0	参数错误，提示id不能为空	null
+TC077	CATEGORY	边界值	id为最小值1	/admin/category	DELETE	已登录获取token，且存在id=1的分类	使用token发送DELETE请求，id=1	id=1	200	1	删除成功	null
+TC077	CATEGORY	边界值	id为最大值999999	/admin/category	DELETE	已登录获取token，且存在id=999999的分类	使用token发送DELETE请求，id=999999	id=999999	200	1	删除成功	null
+TC077	CATEGORY	异常场景	id为负数	/admin/category	DELETE	已登录获取token	使用token发送DELETE请求，id=-1	id=-1	400	0	参数错误，id必须为正整数	null
+TC077	CATEGORY	异常场景	id为浮点数	/admin/category	DELETE	已登录获取token	使用token发送DELETE请求，id=1.5	id=1.5	400	0	参数错误，id必须为整数	null
+TC077	CATEGORY	异常场景	id为字符串	/admin/category	DELETE	已登录获取token	使用token发送DELETE请求，id=abc	id=abc	400	0	参数错误，id必须为数字	null
+TC077	CATEGORY	异常场景	id对应的分类不存在	/admin/category	DELETE	已登录获取token	使用token发送DELETE请求，id=99999（不存在的id）	id=99999	404	0	分类不存在，删除失败	null
+TC077	CATEGORY	异常场景	未登录	/admin/category	DELETE	无	发送DELETE请求，id=1，不带token	id=1	401	0	未登录，返回认证失败	null
+TC077	CATEGORY	异常场景	token已过期	/admin/category	DELETE	已登录但token过期	使用过期token发送DELETE请求，id=1	id=1	401	0	token过期，返回认证失败	null
+TC087	CATEGORY	正常更新	更新分类名称和排序	/admin/category	PUT	已登录获取token，存在分类ID为1	发送PUT请求，修改分类名称为"新分类"，排序为2	{"id":1,"name":"新分类","sort":2}	200	null	返回成功，分类信息更新	null
+TC087	CATEGORY	参数校验	更新时缺少必填字段id	/admin/category	PUT	已登录获取token	发送PUT请求，请求体不包含id字段	{"name":"测试"}	400	null	返回参数缺失错误	null
+TC087	CATEGORY	边界值	更新分类排序为最小值0	/admin/category	PUT	已登录获取token，存在分类ID为2	发送PUT请求，设置sort为0	{"id":2,"name":"分类A","sort":0}	200	null	返回成功，排序更新为0	null
+TC087	CATEGORY	边界值	更新分类排序为最大值999	/admin/category	PUT	已登录获取token，存在分类ID为3	发送PUT请求，设置sort为999	{"id":3,"name":"分类B","sort":999}	200	null	返回成功，排序更新为999	null
+TC087	CATEGORY	边界值	更新分类排序为负数-1	/admin/category	PUT	已登录获取token，存在分类ID为4	发送PUT请求，设置sort为-1	{"id":4,"name":"分类C","sort":-1}	400	null	返回参数校验错误	null
+TC087	CATEGORY	异常场景	更新不存在的分类ID	/admin/category	PUT	已登录获取token	发送PUT请求，id设置为99999	{"id":99999,"name":"不存在分类","sort":1}	404	null	返回分类不存在错误	null
+TC087	CATEGORY	异常场景	未登录时更新分类	/admin/category	PUT	无token	发送PUT请求，不携带认证信息	{"id":1,"name":"未登录测试","sort":1}	401	null	返回未授权错误	null
+TC087	CATEGORY	异常场景	更新分类名称为超长字符串	/admin/category	PUT	已登录获取token，存在分类ID为5	发送PUT请求，name设置为超过100个字符的字符串	{"id":5,"name":"a".repeat(101),"sort":1}	400	null	返回参数长度超限错误	null
+TC087	CATEGORY	异常场景	更新分类时name为空白字符串	/admin/category	PUT	已登录获取token，存在分类ID为6	发送PUT请求，name设置为空字符串	{"id":6,"name":"","sort":1}	400	null	返回名称不能为空错误	null
+TC087	CATEGORY	正常更新	仅更新分类排序字段	/admin/category	PUT	已登录获取token，存在分类ID为7	发送PUT请求，只修改sort字段，不修改name	{"id":7,"name":"原名称","sort":10}	200	null	返回成功，仅排序更新	null
